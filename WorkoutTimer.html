@@ -1,252 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Exercise Timer</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f9;
+      }
 
-        h1 {
-            color: #333;
-        }
+      .timer-settings,
+      .timer-display,
+      .controls {
+        margin: 20px;
+        text-align: center;
+      }
 
-        .timer-settings, .timer-display, .controls {
-            margin: 20px;
-            text-align: center;
-        }
+      .timer-settings input {
+        margin: 5px;
+        padding: 5px;
+      }
 
-        .timer-settings input {
-            margin: 5px;
-            padding: 5px;
-        }
+      .timer-wrapper {
+        width: 80%;
+        padding-left: 10%;
+        padding-right: 10%;
+        height: 60vh;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+        flex-direction: column;
+      }
 
-        .timer-wrapper {
-            width: 80%;
-            padding-left: 10%;
-            padding-right: 10%;
-            height: 60vh;
-            align-items: center;
-            justify-content: center;
-            display: flex;
-            flex-direction: column;
-        }
+      .timer-display {
+        font-size: 40rem;
+        font-weight: bold;
+      }
 
-        .timer-display {
-            font-size: 40rem;
-            font-weight: bold;
-        }
+      .timer-rounds-bar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
 
-        .timer-rounds-bar {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
+      .round-segment {
+        height: 3rem;
+        flex-grow: 1;
+        text-align: center;
+        align-content: center;
+        color: #fff;
+        font-size: 2rem;
+        border-radius: 5px;
+      }
 
-        .round-segment {
-            height: 20px;
-            flex-grow: 1;
-            text-align: center;
-            line-height: 20px;
-            color: #fff;
-            font-size: 0.8rem;
-            border-radius: 5px;
-        }
+      .round-segment.work {
+        background-color: #4caf50;
+      }
 
-        .round-segment.work {
-            background-color: #4caf50;
-        }
+      .round-segment.rest {
+        background-color: #f44336;
+      }
 
-        .round-segment.rest {
-            background-color: #f44336;
-        }
+      .config {
+        margin-top: 5vh;
+      }
 
-        .config {
-            margin-top: 5vh;
-        }
-
-        .controls button {
-            margin: 5px;
-            padding: 10px 15px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
+      .controls button {
+        margin: 5px;
+        padding: 10px 15px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="timer-wrapper">
-        <div class="timer-display" id="timer-display">
-            00:05
+      <div class="timer-display" id="timer-display">00:05</div>
+      <div class="timer-rounds-bar" id="timer-rounds-bar"></div>
+      <div class="config">
+        <div class="timer-settings">
+          <label>
+            Work Time (min):
+            <input type="number" id="work-time" value="4" />
+          </label>
+          <label>
+            Rest Time (sec):
+            <input type="number" id="rest-time" value="45" />
+          </label>
+          <label>
+            Rounds:
+            <input type="number" id="rounds" value="5" />
+          </label>
+          <label>
+            Start Delay (sec):
+            <input type="number" id="start-delay" value="30" />
+          </label>
         </div>
-        <div class="timer-rounds-bar" id="timer-rounds-bar">
+        <div class="controls">
+          <button onclick="startTimer()">Start</button>
+          <button onclick="pauseTimer()">Pause</button>
+          <button onclick="resetTimer()">Reset</button>
         </div>
-        <div class="config">
-            <div class="timer-settings">
-                <label>
-                    Work Time (min):
-                    <input type="number" id="work-time" value="4" step="0.1">
-                </label>
-                <label>
-                    Rest Time (sec):
-                    <input type="number" id="rest-time" value="45">
-                </label>
-                <label>
-                    Rounds:
-                    <input type="number" id="rounds" value="5">
-                </label>
-                <label>
-                    Start Delay (sec):
-                    <input type="number" id="start-delay" value="30">
-                </label>
-            </div>
-            <div class="controls">
-                <button onclick="startTimer()">Start</button>
-                <button onclick="pauseTimer()">Pause</button>
-                <button onclick="resetTimer()">Reset</button>
-            </div>
-        </div>
+      </div>
     </div>
 
     <script>
-        let timerInterval;
-        let isPaused = false;
-        let currentPhase = "delay";
-        let currentRound = 0;
-        let timeRemaining = parseInt(document.getElementById("start-delay").value, 10);
+      let timerInterval;
+      let isPaused = false;
+      let currentPhase = "delay";
+      let currentRound = 0;
+      let timeRemaining = parseInt(
+        document.getElementById("start-delay").value,
+        10
+      );
 
-        function updateDisplay(time) {
-            const minutes = Math.floor(time / 60).toString().padStart(2, '0');
-            const seconds = (time % 60).toString().padStart(2, '0');
-            const timerDisplay = document.getElementById("timer-display");
+      function updateDisplay(time) {
+        const minutes = Math.floor(time / 60)
+          .toString()
+          .padStart(2, "0");
+        const seconds = (time % 60).toString().padStart(2, "0");
+        const timerDisplay = document.getElementById("timer-display");
 
-            if (currentPhase === "delay") {
-                timerDisplay.style.color = "#0000FF"; 
-            } else if (currentPhase === "work") {
-                timerDisplay.style.color = "#316f34";
-            } else if (currentPhase === "rest") {
-                timerDisplay.style.color = "#cb261a";
-            }
-
-            timerDisplay.textContent = `${minutes}:${seconds}`;
+        if (currentPhase === "delay") {
+          timerDisplay.style.color = "#0000FF";
+        } else if (currentPhase === "work") {
+          timerDisplay.style.color = "#316f34";
+        } else if (currentPhase === "rest") {
+          timerDisplay.style.color = "#cb261a";
         }
 
-        function updateRoundsBar() {
-            const rounds = parseInt(document.getElementById("rounds").value, 10);
-            const workTime = parseInt(document.getElementById("work-time").value, 10) * 60; 
-            const restTime = parseInt(document.getElementById("rest-time").value, 10);
-            const timerRoundsBar = document.getElementById("timer-rounds-bar");
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+      }
 
-            timerRoundsBar.innerHTML = ""; 
+      function updateRoundsBar() {
+        const rounds = parseInt(document.getElementById("rounds").value, 10);
+        const workTime =
+          parseInt(document.getElementById("work-time").value, 10) * 60;
+        const restTime = parseInt(
+          document.getElementById("rest-time").value,
+          10
+        );
+        const timerRoundsBar = document.getElementById("timer-rounds-bar");
 
-            const totalTime = rounds * (workTime + restTime); 
+        timerRoundsBar.innerHTML = "";
 
-            for (let i = 1; i <= rounds; i++) {
-                const workWidthPercent = ((workTime / totalTime) * 100).toFixed(2);
-                const restWidthPercent = ((restTime / totalTime) * 100).toFixed(2);
+        const totalTime = rounds * (workTime + restTime);
 
-                const workSegment = document.createElement("div");
-                workSegment.className = "round-segment work";
-                workSegment.style.flexBasis = `${workWidthPercent}%`;
-                workSegment.id = `round-work-${i}`;
-                workSegment.textContent = i;
+        for (let i = 1; i <= rounds; i++) {
+          const workWidthPercent = ((workTime / totalTime) * 100).toFixed(2);
+          const restWidthPercent = ((restTime / totalTime) * 100).toFixed(2);
 
-                timerRoundsBar.appendChild(workSegment);
+          const workSegment = document.createElement("div");
+          workSegment.className = "round-segment work";
+          workSegment.style.flexBasis = `${workWidthPercent}%`;
+          workSegment.id = `round-work-${i}`;
+          workSegment.textContent = i;
 
-                if (i < rounds) { 
-                    const restSegment = document.createElement("div");
-                    restSegment.className = "round-segment rest";
-                    restSegment.style.flexBasis = `${restWidthPercent}%`;
-                    restSegment.id = `round-rest-${i}`;
-                    timerRoundsBar.appendChild(restSegment);
-                }
-            }
+          timerRoundsBar.appendChild(workSegment);
+
+          if (i < rounds) {
+            const restSegment = document.createElement("div");
+            restSegment.className = "round-segment rest";
+            restSegment.style.flexBasis = `${restWidthPercent}%`;
+            restSegment.id = `round-rest-${i}`;
+            timerRoundsBar.appendChild(restSegment);
+          }
+        }
+      }
+
+      function startTimer() {
+        if (timerInterval || isPaused) {
+          isPaused = false;
+          return;
         }
 
-        function startTimer() {
-            if (timerInterval || isPaused) {
-                isPaused = false;
-                return;
-            }
+        const workTime =
+          parseInt(document.getElementById("work-time").value, 10) * 60;
+        const restTime = parseInt(
+          document.getElementById("rest-time").value,
+          10
+        );
+        const rounds = parseInt(document.getElementById("rounds").value, 10);
+        const startDelay = parseInt(
+          document.getElementById("start-delay").value,
+          10
+        );
 
-            const workTime = parseInt(document.getElementById("work-time").value, 10) * 60;
-            const restTime = parseInt(document.getElementById("rest-time").value, 10);
-            const rounds = parseInt(document.getElementById("rounds").value, 10);
-            const startDelay = parseInt(document.getElementById("start-delay").value, 10);
+        timeRemaining =
+          currentPhase === "delay"
+            ? startDelay
+            : currentPhase === "work"
+            ? workTime
+            : restTime;
 
-            timeRemaining = currentPhase === "delay" ? startDelay : (currentPhase === "work" ? workTime : restTime);
-
-            timerInterval = setInterval(() => {
-                if (timeRemaining > 0) {
-                    timeRemaining--;
-                    updateDisplay(timeRemaining);
-                } else {
-                    if (currentPhase === "delay") {
-                        currentPhase = "work";
-                        timeRemaining = workTime;
-                        updateDisplay(timeRemaining);
-                    } else if (currentPhase === "work") {
-                        const completedWorkSegment = document.getElementById(`round-work-${currentRound + 1}`);
-                        if (completedWorkSegment) {
-                            completedWorkSegment.style.backgroundColor = "black";
-                        }
-                        currentPhase = "rest";
-                        timeRemaining = restTime;
-                    } else if (currentPhase === "rest") {
-                        const completedRestSegment = document.getElementById(`round-rest-${currentRound + 1}`);
-                        if (completedRestSegment) {
-                            completedRestSegment.style.backgroundColor = "black";
-                        }
-                        currentRound++;
-                        if (currentRound >= rounds) {
-                            clearInterval(timerInterval);
-                            timerInterval = null;
-                            alert("Workout Complete!");
-                            return;
-                        }
-                        currentPhase = "work";
-                        timeRemaining = workTime;
-                    }
-                }
-            }, 1000);
-        }
-
-        function pauseTimer() {
-            isPaused = true;
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        function resetTimer() {
-            pauseTimer();
-            currentPhase = "delay";
-            currentRound = 0;
-            timeRemaining = parseInt(document.getElementById("start-delay").value, 10);
+        timerInterval = setInterval(() => {
+          if (timeRemaining > 0) {
+            timeRemaining--;
             updateDisplay(timeRemaining);
-            updateRoundsBar();
-        }
-        
+          } else {
+            if (currentPhase === "delay") {
+              currentPhase = "work";
+              timeRemaining = workTime;
+              updateDisplay(timeRemaining);
+            } else if (currentPhase === "work") {
+              const completedWorkSegment = document.getElementById(
+                `round-work-${currentRound + 1}`
+              );
+              if (completedWorkSegment) {
+                completedWorkSegment.style.backgroundColor = "black";
+              }
+              currentPhase = "rest";
+              timeRemaining = restTime;
+            } else if (currentPhase === "rest") {
+              const completedRestSegment = document.getElementById(
+                `round-rest-${currentRound + 1}`
+              );
+              if (completedRestSegment) {
+                completedRestSegment.style.backgroundColor = "black";
+              }
+              currentRound++;
+              if (currentRound >= rounds) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                alert("Workout Complete!");
+                return;
+              }
+              currentPhase = "work";
+              timeRemaining = workTime;
+            }
+          }
+        }, 1000);
+      }
+
+      function pauseTimer() {
+        isPaused = true;
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      function resetTimer() {
+        pauseTimer();
+        currentPhase = "delay";
+        currentRound = 0;
+        timeRemaining = parseInt(
+          document.getElementById("start-delay").value,
+          10
+        );
         updateDisplay(timeRemaining);
         updateRoundsBar();
+      }
 
-        document.getElementById("work-time").addEventListener("input", updateRoundsBar);
-        document.getElementById("rest-time").addEventListener("input", updateRoundsBar);
-        document.getElementById("rounds").addEventListener("input", updateRoundsBar);
-        document.getElementById("start-delay").addEventListener("input", () => {
-            timeRemaining = parseInt(document.getElementById("start-delay").value, 10);
-            updateDisplay(timeRemaining);
-        });
+      updateDisplay(timeRemaining);
+      updateRoundsBar();
+
+      document
+        .getElementById("work-time")
+        .addEventListener("input", updateRoundsBar);
+      document
+        .getElementById("rest-time")
+        .addEventListener("input", updateRoundsBar);
+      document
+        .getElementById("rounds")
+        .addEventListener("input", updateRoundsBar);
+      document.getElementById("start-delay").addEventListener("input", () => {
+        timeRemaining = parseInt(
+          document.getElementById("start-delay").value,
+          10
+        );
+        updateDisplay(timeRemaining);
+      });
     </script>
-</body>
+  </body>
 </html>
